@@ -26,20 +26,21 @@ def main():
 
     status = get_command('git status')
     diff = get_command("git diff")
-    chat=[
+    prompt=[
         {"role": "system", "content": """
             You are a bot that generates git commit messages that are succinct and descriptive, only based on git output.
             You should not be exhaustive, and only describe what seems to matter in the diff. Try to guess what the change is mainly doing
             For example if a configuration changes but there is a new feature implemented in the code as well, focus on the feature.
             However if there is only a configuration change in the diff, then you can mention it in the commit message.
-            You will be given the output of git status, but you don't need to mention the file names in the commit message.
+            Also don't just say what is changed but try to understand why
+            Don't mention the file names in the commit message
 
             Try to keep the headline short. You can generate a multiline commit message if (and only if) needed
         """},
-        {"role": "user", "content": f"Here is the output of `git status`: {status}\nAnd here is the output of git diff: ```{diff}```\nCome up with a helpful commit message"}
+        {"role": "user", "content": f"Here is the output of git diff: ```{diff}```\nCome up with a helpful commit message"}
     ]
 
-    print(complete_chat(chat))
+    print(complete_chat(prompt))
 
 if __name__ == '__main__':
     main()
