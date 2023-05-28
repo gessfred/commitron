@@ -3,7 +3,7 @@ import os
 import openai
 from dotenv import load_dotenv, dotenv_values
 
-def run_git_command(command):
+def get_command(command):
     try:
         output = subprocess.check_output(command.split(), stderr=subprocess.STDOUT)
         return output.decode('utf-8')
@@ -11,22 +11,29 @@ def run_git_command(command):
         # Handle any errors that occur during command execution
         print(f"Error executing command: {e}")
         return None
-    
+
+def complete_chat(chat):    
+    res = openai.ChatCompletion.create(
+    model="gpt-3.5-turbo",
+    messages=chat
+    )
+    return res["choices"][0]["message"]["content"]
 
 #openai.organization = "YOUR_ORG_ID"
 config = dotenv_values(".env")
 openai.api_key = config["OPENAI_API_KEY"]
 # needed to get git diff git config core.fileMode false
-res = openai.ChatCompletion.create(
-  model="gpt-3.5-turbo",
-  messages=[
-        {"role": "system", "content": "You are a helpful assistant."},
-        {"role": "user", "content": "Who won the world series in 2020?"},
-        {"role": "assistant", "content": "The Los Angeles Dodgers won the World Series in 2020."},
-        {"role": "user", "content": "Where was it played?"}
-    ]
-)
-print(res["choices"][0]["message"]["content"])
-status = run_git_command('git status')
-diff = run_git_command("git diff")
-print(diff)
+
+status = get_command('git status')
+diff = get_command("git diff")
+chat=[
+    {"role": "system", "content": """
+        You are a bot that generates git commit messages that are succinct and descriptive, only based on git output.
+        You should not be exhaustive, and only describe what seems to matter in the diff. Try to guess what the change is mainly doing
+        For example if a configuration changes but there is a new feature implemented in the code as well, focus on the feature.
+        However if there is only a configuration change in the diff, then you can mention it in the commit message.
+    """},
+    {"role": "user", "content": f"Here is the output of `git status`: {status}\nAnd here is the output of git diff: ```{diff}```\nCome up with a helpful commit message"}
+]
+
+print(complete_chat(chat))
