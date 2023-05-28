@@ -23,24 +23,26 @@ def complete_chat(chat):
     )
     return res["choices"][0]["message"]["content"]
 
-
-#openai.organization = "YOUR_ORG_ID"
 def main():
-
     diff = get_command("git diff")
-    log = get_command("git log --oneline")
-    codebase = get_command("cat main.py")
     prompt=[
-        {"role": "user", "content": """
-            You are a bot that generates git commit messages that are succinct and descriptive, only based on git diff.
-            You should not be exhaustive, and only describe what seems to matter in the diff.
-            Your message should be context-aware but only focus on what was added or removed.
-            The message should be about what the change is primarily doing.
-            For example, if the diff contains a config change and a new feature, focus on the feature.
-            However if there is only a config change, then you can mention it in the commit message.
-            Don't just say what is changed but explain intent.
-            Keep the headline short.
-        """},
+        {"role": "system", "content": """
+                You are a bot that generates git commit messages that are succinct and descriptive, only based on the output git diff.
+            """
+        },
+        {
+            "role": "user",
+            "content": """
+                You will next be given the output of git diff.
+                You should not be exhaustive, and only describe what seems to matter in the diff.
+                Your message should be context-aware but only focus on what was added or removed.
+                The message should be about what the change is primarily doing.
+                For example, if the diff contains a config change and a new feature, focus on the feature.
+                However if there is only a config change, then you can mention it in the commit message.
+                Don't say what is changed but explain the intent behind the change.
+                Keep the headline short and don't write on multiple lines.
+            """
+        },
         {"role": "user", "content": f"""
             Here is the output of git diff: ```{diff}```
             Come up with a helpful commit message and don't mention the file names in the commit message.
@@ -48,6 +50,8 @@ def main():
         }
     ]
     commit_message = complete_chat(prompt)
+    print(diff)
+    print("\n-----------------\n")
     print(commit_message)
     log_event({"diff": diff, "message": commit_message})
 
