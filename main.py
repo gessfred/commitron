@@ -37,9 +37,7 @@ def main():
                 You should not be exhaustive, and only describe what seems to matter in the diff.
                 Your message should be context-aware but only focus on what was added or removed.
                 The message should be about what the change is primarily doing.
-                For example, if the diff contains a config change and a new feature, focus on the feature.
-                However if there is only a config change, then you can mention it in the commit message.
-                Don't say what is changed but explain the intent behind the change.
+                The message should not focus too much on what is changed but explain the intent behind the change.
                 Keep the headline short and don't write on multiple lines.
             """
         },
