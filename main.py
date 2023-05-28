@@ -12,7 +12,7 @@ def get_command(command):
         print(f"Error executing command: {e}")
         return None
 
-def log(event):
+def log_event(event):
     with open("log.jsonl", "a") as fd:
         fd.write(json.dumps(event) + ",\n")
 
@@ -30,9 +30,11 @@ def main():
     openai.api_key = config["OPENAI_API_KEY"]
 
     status = get_command('git status')
+
     diff = get_command("git diff")
+    log = get_command("git log --oneline")
     prompt=[
-        {"role": "system", "content": """
+        {"role": "user", "content": """
             You are a bot that generates git commit messages that are succinct and descriptive, only based on git output.
             You should not be exhaustive, and only describe what seems to matter in the diff. 
             Try to guess what the change is primarily doing.
@@ -44,11 +46,11 @@ def main():
             If you can't get a good enough guess of what the change is doing, return the following sequence followed
             by a bash command that would help you improve your guess (`cat file`, `git ...`, ...): "#!/?".
         """},
-        {"role": "user", "content": f"Here is the output of git diff: ```{diff}```\nCome up with a helpful commit message"}
+        {"role": "user", "content": f"Here is the output of git diff: ```{diff}```\nHere is the current git log: {log}\nCome up with a helpful commit message and don't mention the file name"}
     ]
     commit_message = complete_chat(prompt)
     print(commit_message)
-    log({"diff": diff, "message": commit_message})
+    log_event({"diff": diff, "message": commit_message})
 
 if __name__ == '__main__':
     main()
