@@ -1,7 +1,7 @@
 import subprocess
-import os
 import openai
-from dotenv import load_dotenv, dotenv_values
+import json
+from dotenv import dotenv_values
 
 def get_command(command):
     try:
@@ -12,12 +12,17 @@ def get_command(command):
         print(f"Error executing command: {e}")
         return None
 
+def log(event):
+    with open("log.jsonl", "a") as fd:
+        fd.write(json.dumps(event) + ",\n")
+
 def complete_chat(chat):    
     res = openai.ChatCompletion.create(
-    model="gpt-3.5-turbo",
-    messages=chat
+        model="gpt-3.5-turbo",
+        messages=chat
     )
     return res["choices"][0]["message"]["content"]
+
 
 #openai.organization = "YOUR_ORG_ID"
 def main():
@@ -29,18 +34,21 @@ def main():
     prompt=[
         {"role": "system", "content": """
             You are a bot that generates git commit messages that are succinct and descriptive, only based on git output.
-            You should not be exhaustive, and only describe what seems to matter in the diff. Try to guess what the change is mainly doing
-            For example if a configuration changes but there is a new feature implemented in the code as well, focus on the feature.
-            However if there is only a configuration change in the diff, then you can mention it in the commit message.
-            Also don't just say what is changed but try to understand why
-            Don't mention the file names in the commit message
-
-            Try to keep the headline short. You can generate a multiline commit message if (and only if) needed
+            You should not be exhaustive, and only describe what seems to matter in the diff. 
+            Try to guess what the change is primarily doing.
+            For example if the diff contains a configuration change but also a new feature, focus on the feature.
+            However if there is only a configuration change, then you can mention it in the commit message.
+            Also don't just say what is changed but try to understand why.
+            Don't mention the file names in the commit message.
+            Try to keep the headline short. You can generate a multiline commit message if (and only if) needed.
+            If you can't get a good enough guess of what the change is doing, return the following sequence followed
+            by a bash command that would help you improve your guess (`cat file`, `git ...`, ...): "#!/?".
         """},
         {"role": "user", "content": f"Here is the output of git diff: ```{diff}```\nCome up with a helpful commit message"}
     ]
-
-    print(complete_chat(prompt))
+    commit_message = complete_chat(prompt)
+    print(commit_message)
+    log({"diff": diff, "message": commit_message})
 
 if __name__ == '__main__':
     main()
