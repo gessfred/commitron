@@ -20,20 +20,26 @@ def complete_chat(chat):
     return res["choices"][0]["message"]["content"]
 
 #openai.organization = "YOUR_ORG_ID"
-config = dotenv_values(".env")
-openai.api_key = config["OPENAI_API_KEY"]
-# needed to get git diff git config core.fileMode false
+def main():
+    config = dotenv_values(".env")
+    openai.api_key = config["OPENAI_API_KEY"]
 
-status = get_command('git status')
-diff = get_command("git diff")
-chat=[
-    {"role": "system", "content": """
-        You are a bot that generates git commit messages that are succinct and descriptive, only based on git output.
-        You should not be exhaustive, and only describe what seems to matter in the diff. Try to guess what the change is mainly doing
-        For example if a configuration changes but there is a new feature implemented in the code as well, focus on the feature.
-        However if there is only a configuration change in the diff, then you can mention it in the commit message.
-    """},
-    {"role": "user", "content": f"Here is the output of `git status`: {status}\nAnd here is the output of git diff: ```{diff}```\nCome up with a helpful commit message"}
-]
+    status = get_command('git status')
+    diff = get_command("git diff")
+    chat=[
+        {"role": "system", "content": """
+            You are a bot that generates git commit messages that are succinct and descriptive, only based on git output.
+            You should not be exhaustive, and only describe what seems to matter in the diff. Try to guess what the change is mainly doing
+            For example if a configuration changes but there is a new feature implemented in the code as well, focus on the feature.
+            However if there is only a configuration change in the diff, then you can mention it in the commit message.
+            You will be given the output of git status, but you don't need to mention the file names in the commit message.
 
-print(complete_chat(chat))
+            Try to keep the headline short. You can generate a multiline commit message if (and only if) needed
+        """},
+        {"role": "user", "content": f"Here is the output of `git status`: {status}\nAnd here is the output of git diff: ```{diff}```\nCome up with a helpful commit message"}
+    ]
+
+    print(complete_chat(chat))
+
+if __name__ == '__main__':
+    main()
