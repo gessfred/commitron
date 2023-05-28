@@ -33,6 +33,7 @@ def main():
 
     diff = get_command("git diff")
     log = get_command("git log --oneline")
+    codebase = get_command("cat main.py")
     prompt=[
         {"role": "user", "content": """
             You are a bot that generates git commit messages that are succinct and descriptive, only based on git output.
@@ -43,10 +44,12 @@ def main():
             Also don't just say what is changed but try to understand why.
             Don't mention the file names in the commit message.
             Try to keep the headline short. You can generate a multiline commit message if (and only if) needed.
-            If you can't get a good enough guess of what the change is doing, return the following sequence followed
-            by a bash command that would help you improve your guess (`cat file`, `git ...`, ...): "#!/?".
         """},
-        {"role": "user", "content": f"Here is the output of git diff: ```{diff}```\nHere is the current git log: {log}\nCome up with a helpful commit message and don't mention the file name"}
+        {"role": "user", "content": f"""
+            First, here is the full content of file(s) that were updated {codebase}
+            Here is the output of git diff: ```{diff}```
+            Here is the current git log: {log}
+            Come up with a helpful commit message and don't mention the file name"""}
     ]
     commit_message = complete_chat(prompt)
     print(commit_message)
