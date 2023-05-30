@@ -23,33 +23,36 @@ def complete_chat(chat):
     )
     return res["choices"][0]["message"]["content"]
 
+def filter_git_diff(output):
+    filtered_output = []
+    for line in output.splitlines():
+        if not line.startswith(('diff', 'old mode', 'new mode')):
+            filtered_output.append(line)
+    return '\n'.join(filtered_output)
+
 def main():
     diff = get_command("git diff")
+    diff = filter_git_diff(diff)
+    #py_file = get_command("cat main.py")
     prompt=[
         {"role": "system", "content": """
-                You are a bot that generates git commit messages that are succinct and descriptive, only based on the output git diff.
+                You are a bot that automates the generation of helpful git commit messages that are succinct and descriptive
             """
         },
         {
             "role": "user",
             "content": """
-                You will next be given the output of git diff.
-                You should not be exhaustive, and only describe what seems to matter in the diff.
-                Your message should be context-aware but only focus on what was added or removed.
-                The message should be about what the change is primarily doing.
-                The message should not focus too much on what is changed but explain the intent behind the change.
-                Keep the headline short and don't write on multiple lines.
+                I want you to act as a commit message generator. I will provide you with information about the task and the prefix for the task code, and I would like you to generate an appropriate commit message using the conventional commit format. Do not write any explanations or other words, just reply with the commit message.
             """
         },
-        {"role": "user", "content": f"""
-            Here is the output of git diff: ```{diff}```
-            Come up with a helpful commit message and don't mention the file names in the commit message.
+        {
+            "role": "user",
+            "content": f"""
+                Output of git diff: {diff}
             """
         }
     ]
     commit_message = complete_chat(prompt)
-    print(diff)
-    print("\n-----------------\n")
     print(commit_message)
     log_event({"diff": diff, "message": commit_message})
 
